@@ -1,6 +1,10 @@
 const alphabet = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
 
-const contactList = []
+const contactList = {}
+
+alphabet.forEach(letter => {
+    contactList[letter] = []
+})
 
 const namesFirstLetter = []
 
@@ -9,9 +13,9 @@ const alphabetMap = alphabet.map((letter) => `<div id="${letter}" class="contact
 document.querySelector('.contact-list').innerHTML = alphabetMap
 
 function Contact(name, vacancy, phone) {
-    this.name = name
-    this.vacancy = vacancy
-    this.phone = phone
+        this.name = name
+        this.vacancy = vacancy
+        this.phone = phone
 }
     
 document.forms.form.onsubmit = function(e) {
@@ -27,9 +31,9 @@ document.forms.form.onsubmit = function(e) {
         errorMessage.innerHTML = 'Вы не ввели имя, вакансию или номер телефона'
         return // Прекращаем выполнение функции, если есть ошибки
     } 
-
-    const nameExist = contactList.some(contact => contact.name === name)
-    const phoneExist = contactList.some(contact => contact.phone === phone)
+    const firstLetter = name[0].toUpperCase()
+    const nameExist = contactList[firstLetter].some(contact => contact.name === name)
+    const phoneExist = contactList[firstLetter].some(contact => contact.phone === phone)
 
     if(nameExist) {
         errorMessage.innerHTML = 'Имя уже занято'
@@ -41,19 +45,19 @@ document.forms.form.onsubmit = function(e) {
     }
 
     let contact = new Contact(name, vacancy, phone)
-    contactList.push(contact)
+    contactList[firstLetter].push(contact);
 
-    namesFirstLetter.push(contact.name[0])
+    namesFirstLetter.push(firstLetter);
     
     const counts = {}
 
     namesFirstLetter.forEach(function (x) { counts[x] = (counts[x] || 0) + 1; })
 
-    const lastLetter = namesFirstLetter[namesFirstLetter.length - 1];
-    const counterText = `${counts[lastLetter]}`
+    // const lastLetter = namesFirstLetter[namesFirstLetter.length - 1];
+    const counterText = `${counts[firstLetter]}`
     
     // Проверяем, есть ли уже элемент с количеством, и если нет, то создаем его
-    const letterDiv = document.querySelector(`#${lastLetter}`);
+    const letterDiv = document.querySelector(`#${firstLetter}`);
     let counterElement = letterDiv.querySelector('.contact-item-number');
     
     if (counterElement) {
@@ -74,15 +78,35 @@ const handleClick = (e) => {
     // Ищем ближайший родительский элемент, который имеет атрибут id
     const letterDiv = e.target.closest('.contact-item');
     
-    const insideLetter = document.querySelector(`#${letterDiv.id}`)
-
     if (letterDiv && letterDiv.id) {
         // Проверяем, существует ли уже элемент с классом 'contact-details'
         if (!letterDiv.querySelector('.contact-details')) {
+            const contacts = contactList[letterDiv.id];
+            let contactDetails = '<div class="contact-details">';
+            contacts.forEach(contact => {
+                contactDetails += `<p>Name: ${contact.name}</p>`;
+                contactDetails += `<p>Vacancy: ${contact.vacancy}</p>`;
+                contactDetails += `<p>Phone: ${contact.phone}</p>`;
+                contactDetails += '<hr>';
+            });
+            contactDetails += '</div>';
             // Вставляем новый элемент в конец letterDiv, если его еще нет
-            letterDiv.insertAdjacentHTML('beforeend', `<div class="contact-details">Подробный контакт</div>`);
+            letterDiv.insertAdjacentHTML('beforeend', contactDetails);
         }
     }
+};
+
+allLetters.addEventListener('click', handleClick);
+
+function clearContactList() {
+    alphabet.forEach(letter => {
+        contactList[letter] = [];
+    });
+    document.querySelectorAll('.contact-item-number, .contact-details').forEach(element => element.remove());
+    namesFirstLetter.length = 0;
+    console.log('Contact list cleared:', contactList);
 }
 
-allLetters.addEventListener('click', handleClick)
+
+const clearButton = document.querySelector('#clear')
+clearButton.addEventListener('click', clearContactList)
